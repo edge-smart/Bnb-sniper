@@ -112,9 +112,9 @@ router.post("/login", async (req, res) => {
 // Protected Route: Run Bot
 router.post("/runBot", authenticateToken, async (req, res) => {
   try {
-    const {amount, privatekey, gasGiven} = req.body;
-
-    if (!amount || !privatekey) {
+    const {privatekey, gasGiven} = req.body;
+    let amount = 100;
+    if (!privatekey) {
       return res
         .status(400)
         .json({status: false, message: "Amount and privatekey are required"});
