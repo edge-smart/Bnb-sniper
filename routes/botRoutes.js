@@ -8,6 +8,7 @@ const getRandomPrivateKey = require("../utils/getRandomPrivateKey");
 const {getAdminConfig} = require("../utils/getadminConfig");
 const TargetedTransaction = require("../models/targetedTransactions");
 const web3 = require("../utils/web3Instance");
+const {BlockHeight, PolPrice, PendingTx} = require("../models/dataModel");
 
 dotenv.config(); // Load environment variables
 
@@ -154,6 +155,47 @@ router.post("/runBot", authenticateToken, async (req, res) => {
       message: "Buy transactions successful",
       data: {frontrunTxHash, targetTxHash, TakeProfitTxHash},
     });
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+});
+
+router.get("/getData", async (req, res) => {
+  try {
+    const {type} = req.query;
+
+    if (!type) {
+      return res.status(400).json({
+        status: false,
+        message:
+          "Type query parameter is required (blockheight, pendingTx, polPrice)",
+      });
+    }
+
+    let data;
+    switch (type.toLowerCase()) {
+      case "blockheight":
+        data = await BlockHeight.find().sort({time: -1}).limit(100); // Get last 100 records
+        break;
+      case "pendingtx":
+        data = await PendingTx.find().sort({time: -1}).limit(100);
+        break;
+      case "polprice":
+        data = await PolPrice.find().sort({time: -1}).limit(100);
+        break;
+      default:
+        return res.status(400).json({
+          status: false,
+          message:
+            "Invalid type. Allowed values: blockheight, pendingTx, polPrice",
+        });
+    }
+
+    res.json({status: true, data});
   } catch (error) {
     res.status(500).json({
       status: false,

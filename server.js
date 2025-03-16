@@ -7,6 +7,7 @@ const adminRoutes = require("./routes/adminRoutes");
 const connectDB = require("./config/db");
 connectDB();
 require("./cronjobSell");
+require("./graphCronJob.js");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
