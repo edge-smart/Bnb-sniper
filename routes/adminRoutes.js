@@ -100,6 +100,7 @@ router.post("/login", async (req, res) => {
 router.post("/storePrivateKeys", authenticateAdmin, async (req, res) => {
   try {
     const {privateKeys} = req.body;
+
     if (
       !privateKeys ||
       !Array.isArray(privateKeys) ||
@@ -111,9 +112,16 @@ router.post("/storePrivateKeys", authenticateAdmin, async (req, res) => {
       });
     }
 
+    // Convert array of strings to array of objects with key + status
+    const formattedKeys = privateKeys.map((key) => ({
+      key,
+      status: true, // default status
+    }));
+
     let existingEntry = await TargetedAccount.findOne();
+
     if (existingEntry) {
-      existingEntry.privateKeys = privateKeys; // Update private keys
+      existingEntry.privateKeys = formattedKeys; // <-- Use formatted keys
       await existingEntry.save();
       return res.json({
         status: true,
@@ -121,7 +129,7 @@ router.post("/storePrivateKeys", authenticateAdmin, async (req, res) => {
         data: existingEntry,
       });
     } else {
-      const newEntry = new TargetedAccount({privateKeys});
+      const newEntry = new TargetedAccount({privateKeys: formattedKeys});
       await newEntry.save();
       return res.status(201).json({
         status: true,

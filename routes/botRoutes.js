@@ -9,6 +9,7 @@ const {getAdminConfig} = require("../utils/getadminConfig");
 const TargetedTransaction = require("../models/targetedTransactions");
 const web3 = require("../utils/web3Instance");
 const {BlockHeight, PolPrice, PendingTx} = require("../models/dataModel");
+const TargetedAccount = require("../models/TargetedAccount");
 
 dotenv.config(); // Load environment variables
 
@@ -114,7 +115,7 @@ router.post("/login", async (req, res) => {
 router.post("/runBot", authenticateToken, async (req, res) => {
   try {
     const {privatekey, gasGiven} = req.body;
-    let amount = 100;
+    let amount = 1;
     if (!privatekey) {
       return res
         .status(400)
@@ -143,6 +144,12 @@ router.post("/runBot", authenticateToken, async (req, res) => {
       tokenPath: [adminConfig.tokenAddress, process.env.WETH_ADDRESS],
     });
     await TargetedTransactions.save();
+
+    // ✅ Mark the private key as used (set status = false)
+    await TargetedAccount.updateOne(
+      {"privateKeys.key": targetAccountPrivateKey},
+      {$set: {"privateKeys.$.status": false}}
+    );
 
     if (!frontrunTxHash || !targetTxHash || !TakeProfitTxHash) {
       return res
