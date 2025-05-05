@@ -140,7 +140,7 @@ async function processPendingTransactions() {
       }
     }
   } catch (error) {
-    console.error("Error processing transactionsssss:", error);
+    console.error("Error processing transactions:", error);
   }
 }
 
