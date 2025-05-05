@@ -8,20 +8,13 @@ const getRandomPrivateKey = async () => {
       throw new Error("No private keys found in the database.");
     }
 
-    // Filter only keys with status: true
-    const availableKeys = account.privateKeys.filter(
-      (pk) => pk.status === true
-    );
+    const index = account.currentIndex % account.privateKeys.length;
+    const selectedKey = account.privateKeys[index]; // returning full object or just the key?
 
-    if (availableKeys.length === 0) {
-      throw new Error("No available private key with status: true.");
-    }
-    console.log("availableKeys[0].key", availableKeys[0].key);
-
-    // Return the first one (or use random if needed)
-    return availableKeys[0].key;
+    console.log("selectedKey", selectedKey);
+    return selectedKey;
   } catch (error) {
-    console.error("Error fetching valid private key:", error.message);
+    console.error("Error fetching sequential private key:", error.message);
     return null;
   }
 };

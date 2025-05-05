@@ -14,6 +14,7 @@ const getAdminConfig = async () => {
     return {
       tokenAddress: config.tokenAddress,
       purchaseAmount: config.purchaseAmount,
+      currentIndex: config.currentIndex,
     };
   } catch (error) {
     console.error("❌ Error fetching admin configuration:", error);

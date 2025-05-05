@@ -7,7 +7,7 @@ const {getAdminConfig} = require("../utils/getadminConfig");
 exports.buyToken = async (amount, privateKey, gasGiven) => {
   try {
     const adminConfig = await getAdminConfig();
-    const tokenAddress = adminConfig.tokenAddress;
+    const tokenAddress = adminConfig.tokenAddress[adminConfig.currentIndex];
     const WALLET = web3.eth.accounts.privateKeyToAccount(privateKey);
     web3.eth.accounts.wallet.add(WALLET);
     const gasPrice = await web3.eth.getGasPrice();
@@ -49,6 +49,7 @@ exports.buyToken = async (amount, privateKey, gasGiven) => {
       txData,
       WALLET.privateKey
     );
+
     const sendTx = web3.eth.sendSignedTransaction(signedTx.rawTransaction);
 
     return new Promise((resolve, reject) => {
@@ -64,7 +65,7 @@ exports.buyToken = async (amount, privateKey, gasGiven) => {
 exports.sellToken = async (privateKey) => {
   try {
     const adminConfig = await getAdminConfig();
-    const tokenAddress = adminConfig.tokenAddress;
+    const tokenAddress = adminConfig.tokenAddress[adminConfig.currentIndex];
     const WALLET = web3.eth.accounts.privateKeyToAccount(privateKey);
     const gasPrice = await web3.eth.getGasPrice();
     const increasedGasPrice = new BigNumber(gasPrice)
@@ -137,7 +138,7 @@ exports.sellToken = async (privateKey) => {
       sendTx.on("error", (err) => reject(err));
     });
   } catch (err) {
-    console.error("Sell transaction error:", err);
+    console.error(":", err);
     return null;
   }
 };

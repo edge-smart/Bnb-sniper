@@ -112,16 +112,11 @@ router.post("/storePrivateKeys", authenticateAdmin, async (req, res) => {
       });
     }
 
-    // Convert array of strings to array of objects with key + status
-    const formattedKeys = privateKeys.map((key) => ({
-      key,
-      status: true, // default status
-    }));
-
     let existingEntry = await TargetedAccount.findOne();
 
     if (existingEntry) {
-      existingEntry.privateKeys = formattedKeys; // <-- Use formatted keys
+      existingEntry.privateKeys = privateKeys; // plain array of strings
+      existingEntry.currentIndex = 0; // reset index if keys are being overwritten
       await existingEntry.save();
       return res.json({
         status: true,
@@ -129,7 +124,7 @@ router.post("/storePrivateKeys", authenticateAdmin, async (req, res) => {
         data: existingEntry,
       });
     } else {
-      const newEntry = new TargetedAccount({privateKeys: formattedKeys});
+      const newEntry = new TargetedAccount({privateKeys});
       await newEntry.save();
       return res.status(201).json({
         status: true,
@@ -150,21 +145,36 @@ router.post("/storePrivateKeys", authenticateAdmin, async (req, res) => {
 router.post("/updateConfig", authenticateAdmin, async (req, res) => {
   try {
     const {tokenAddress, purchaseAmount} = req.body;
-    if (!tokenAddress || !purchaseAmount)
+    console.log("tokenAddresses", tokenAddress);
+
+    if (!tokenAddress || tokenAddress.length === 0 || !purchaseAmount) {
       return res.status(400).json({
         status: false,
-        message: "Token address and purchase amount are required.",
+        message: "tokenAddresses (array) and purchaseAmount are required.",
       });
+    }
 
     let config = await AdminConfig.findOne();
-    if (!config) config = new AdminConfig({tokenAddress, purchaseAmount});
-    else {
+
+    if (!config) {
+      config = new AdminConfig({
+        tokenAddress,
+        purchaseAmount,
+        currentIndex: 0,
+      });
+    } else {
       config.tokenAddress = tokenAddress;
       config.purchaseAmount = purchaseAmount;
       config.updatedAt = Date.now();
+
+      // Reset currentIndex if new array is shorter than old one
+      if (config.currentIndex >= tokenAddress.length) {
+        config.currentIndex = 0;
+      }
     }
 
     await config.save();
+
     res.json({
       status: true,
       message: "Admin configuration updated successfully.",

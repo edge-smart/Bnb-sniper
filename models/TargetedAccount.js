@@ -1,18 +1,14 @@
 const mongoose = require("mongoose");
 
 const TargetedAccountSchema = new mongoose.Schema({
-  privateKeys: [
-    {
-      key: {
-        type: String,
-        required: true,
-      },
-      status: {
-        type: Boolean,
-        default: true,
-      },
-    },
-  ],
+  privateKeys: {
+    type: [String], // ← Array of strings directly
+    required: true,
+  },
+  currentIndex: {
+    type: Number,
+    default: 0,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

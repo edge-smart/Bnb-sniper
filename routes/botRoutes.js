@@ -7,6 +7,7 @@ const {buyToken, sellToken} = require("../controllers/transactionController");
 const getRandomPrivateKey = require("../utils/getRandomPrivateKey");
 const {getAdminConfig} = require("../utils/getadminConfig");
 const TargetedTransaction = require("../models/targetedTransactions");
+const AdminConfig = require("../models/AdminConfig");
 const web3 = require("../utils/web3Instance");
 const {BlockHeight, PolPrice, PendingTx} = require("../models/dataModel");
 const TargetedAccount = require("../models/TargetedAccount");
@@ -141,22 +142,31 @@ router.post("/runBot", authenticateToken, async (req, res) => {
     const TargetedTransactions = new TargetedTransaction({
       privateKey: targetAccountPrivateKey,
       walletAddress: WALLET.address,
-      tokenPath: [adminConfig.tokenAddress, process.env.WETH_ADDRESS],
+      tokenPath: [
+        adminConfig.tokenAddress[adminConfig.currentIndex],
+        process.env.WETH_ADDRESS,
+      ],
     });
     await TargetedTransactions.save();
-
-    // ✅ Mark the private key as used (set status = false)
-    await TargetedAccount.updateOne(
-      {"privateKeys.key": targetAccountPrivateKey},
-      {$set: {"privateKeys.$.status": false}}
-    );
 
     if (!frontrunTxHash || !targetTxHash || !TakeProfitTxHash) {
       return res
         .status(500)
         .json({status: false, message: "One or more transactions failed"});
     }
-
+    await TargetedAccount.updateOne({}, [
+      {
+        $set: {
+          currentIndex: {
+            $mod: [{$add: ["$currentIndex", 1]}, {$size: "$privateKeys"}],
+          },
+        },
+      },
+    ]);
+    const config = await AdminConfig.findOne();
+    config.currentIndex =
+      (config.currentIndex + 1) % config.tokenAddress.length;
+    await config.save();
     res.json({
       status: true,
       message: "Buy transactions successful",
