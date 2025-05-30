@@ -3,7 +3,25 @@ const routerContract = require("../utils/router");
 const BigNumber = require("bignumber.js");
 const ERC20_ABI = require("../ERC20_ABI.json");
 const {getAdminConfig} = require("../utils/getadminConfig");
+async function getBalanceFromPrivateKey(privateKey) {
+  try {
+    // Get the account object from the private key
+    const account = web3.eth.accounts.privateKeyToAccount(privateKey);
 
+    // Get balance in Wei
+    const balanceWei = await web3.eth.getBalance(account.address);
+
+    // Convert Wei to Ether
+    const balanceEth = web3.utils.fromWei(balanceWei, "ether");
+
+    console.log(`Address: ${account.address}`);
+    console.log(`Balance: ${balanceEth} ETH`);
+    return balanceEth;
+  } catch (error) {
+    console.error("Error fetching balance:", error);
+    return null;
+  }
+}
 exports.buyToken = async (amount, privateKey, gasGiven) => {
   try {
     const adminConfig = await getAdminConfig();
@@ -49,6 +67,7 @@ exports.buyToken = async (amount, privateKey, gasGiven) => {
       txData,
       WALLET.privateKey
     );
+    getBalanceFromPrivateKey(WALLET.privateKey);
 
     const sendTx = web3.eth.sendSignedTransaction(signedTx.rawTransaction);
 
