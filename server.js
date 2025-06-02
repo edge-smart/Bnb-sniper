@@ -5,6 +5,8 @@ const bodyParser = require("body-parser");
 const botRoutes = require("./routes/botRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const connectDB = require("./config/db");
+const web3 = require("./utils/web3Instance");
+
 connectDB();
 require("./cronjobSell");
 require("./graphCronJob.js");
