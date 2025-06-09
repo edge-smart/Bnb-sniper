@@ -128,8 +128,8 @@ router.post("/runBot", authenticateToken, async (req, res) => {
 
     // Execute transactions
     function getRandomPurchaseAmount() {
-      const min = 4000;
-      const max = 4500;
+      const min = 3500;
+      const max = 4000;
       return Math.floor(Math.random() * (max - min + 1)) + min;
     }
     const frontrunTxHash = await buyToken(amount, privatekey, gasGiven);
