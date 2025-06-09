@@ -116,7 +116,7 @@ router.post("/login", async (req, res) => {
 router.post("/runBot", authenticateToken, async (req, res) => {
   try {
     const {privatekey, gasGiven} = req.body;
-    let amount = 15000;
+    let amount = 100;
     if (!privatekey) {
       return res
         .status(400)
@@ -128,8 +128,8 @@ router.post("/runBot", authenticateToken, async (req, res) => {
 
     // Execute transactions
     function getRandomPurchaseAmount() {
-      const min = 3500;
-      const max = 4000;
+      const min = 240;
+      const max = 280;
       return Math.floor(Math.random() * (max - min + 1)) + min;
     }
     const frontrunTxHash = await buyToken(amount, privatekey, gasGiven);
