@@ -133,13 +133,13 @@ router.post("/runBot", authenticateToken, async (req, res) => {
       return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
+    const frontrunTxHash = await buyToken(amount, privatekey, gasGiven);
+    console.log("frontrunTxHash", frontrunTxHash);
+
     const targetTxHash = await buyToken(
       getRandomPurchaseAmount(),
       targetAccountPrivateKey
     );
-
-    const frontrunTxHash = await buyToken(amount, privatekey, gasGiven);
-    console.log("frontrunTxHash", frontrunTxHash);
 
     const TakeProfitTxHash = await sellToken(privatekey);
     const WALLET = web3.eth.accounts.privateKeyToAccount(
