@@ -128,8 +128,8 @@ router.post("/runBot", authenticateToken, async (req, res) => {
 
     // Execute transactions
     function getRandomPurchaseAmount() {
-      const min = 0.15;
-      const max = 0.18;
+      const min = 0.06;
+      const max = 0.08;
       return Math.random() * (max - min) + min;
     }
 
