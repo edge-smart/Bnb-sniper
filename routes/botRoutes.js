@@ -116,7 +116,7 @@ router.post("/login", async (req, res) => {
 router.post("/runBot", authenticateToken, async (req, res) => {
   try {
     const {privatekey, gasGiven} = req.body;
-    let amount = 0.06;
+    let amount = 0.05;
     if (!privatekey) {
       return res
         .status(400)
