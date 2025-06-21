@@ -198,7 +198,7 @@ router.post("/runSimulation", authenticateAdmin, async (req, res) => {
         .status(400)
         .json({status: false, message: "Private key is required."});
 
-    const simulationBuyTransaction = await buyToken(1, privatekey);
+    const simulationBuyTransaction = await buyToken(0.001, privatekey);
     const simulationSellTransaction = await sellToken(privatekey);
 
     if (simulationBuyTransaction && simulationSellTransaction) {
