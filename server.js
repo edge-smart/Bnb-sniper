@@ -30,3 +30,11 @@ app.use("/admin", adminRoutes);
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
+
+// {
+//   "tokenAddress": [
+// "0xD6367De29f174175e00A318a38E6e049e79beb97",
+//  "0x109ca744ae9203441586dae1a332af815856d8b6"
+// ],
+//   "purchaseAmount":"250"
+// }
