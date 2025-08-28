@@ -5,10 +5,11 @@ const routerContract = require("./utils/router");
 const ERC20_ABI = require("./ERC20_ABI.json");
 const TargetedTransaction = require("./models/targetedTransactions");
 const connectDB = require("./config/db");
-const {ROUTER_ADDRESS, SLIPPAGE, GAS_LIMIT} = require("./config/config");
+const {ROUTER_ADDRESS, SLIPPAGE = 100, GAS_LIMIT} = require("./config/config");
 
 // Initialize Web3 instance (Using Infura/Alchemy or another provider)
 const web3 = require("./utils/web3Instance"); // Assuming you've already initialized your web3 instance
+
 async function getTokenBalance(tokenAddress, walletAddress) {
   const tokenContract = new web3.eth.Contract(ERC20_ABI, tokenAddress);
   const balance = await tokenContract.methods.balanceOf(walletAddress).call();
@@ -48,45 +49,77 @@ async function approveTokens(wallet, tokenAddress, tokenAmount) {
   }
 }
 
+// --- NEW: compute amountOutMin from router quote using SLIPPAGE (bps)
+async function getAmountOutMin(amountIn, path) {
+  const amounts = await routerContract.methods
+    .getAmountsOut(amountIn, path)
+    .call();
+  const expectedOut = new BigNumber(amounts[amounts.length - 1]);
+  const minOut = expectedOut
+    .multipliedBy(10000 - SLIPPAGE)
+    .div(10000)
+    .toFixed(0);
+  return minOut;
+}
+
+// --- UPDATED: retry up to 3 times; re-quote amountOutMin each attempt
 async function executeSwap(wallet, tokenPath, tokenAmount) {
   try {
     const currentTime = Math.floor(Date.now() / 1000);
     const deadline = currentTime + 10 * 60; // 10 minutes expiry
-
-    // Reverse the token path for selling
-    // const reversedPath = tokenPath.reverse();
 
     const gasPrice = await web3.eth.getGasPrice();
     const increasedGasPrice = new BigNumber(gasPrice)
       .multipliedBy(1.5)
       .toFixed(0);
 
-    const tx = {
-      from: wallet.address,
-      to: ROUTER_ADDRESS,
-      gas: "210000",
-      gasPrice: increasedGasPrice,
-      data: routerContract.methods
-        .swapExactTokensForETHSupportingFeeOnTransferTokens(
-          tokenAmount,
-          0,
-          tokenPath,
-          wallet.address,
-          deadline
-        )
-        .encodeABI(),
-      nonce: await web3.eth.getTransactionCount(wallet.address, "pending"),
-    };
+    let lastError;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const amountOutMin = await getAmountOutMin(tokenAmount, tokenPath);
 
-    const signedTx = await wallet.signTransaction(tx);
-    const sendPromise = web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+        const tx = {
+          from: wallet.address,
+          to: ROUTER_ADDRESS,
+          gas: "210000",
+          gasPrice: increasedGasPrice,
+          data: routerContract.methods
+            .swapExactTokensForETHSupportingFeeOnTransferTokens(
+              tokenAmount,
+              amountOutMin, // <-- no more 0
+              tokenPath,
+              wallet.address,
+              deadline
+            )
+            .encodeABI(),
+          nonce: await web3.eth.getTransactionCount(wallet.address, "pending"),
+        };
 
-    sendPromise.on("transactionHash", (hash) => {
-      console.log(`Transaction sent: ${hash}`);
-    });
+        const signedTx = await wallet.signTransaction(tx);
+        const sendPromise = web3.eth.sendSignedTransaction(
+          signedTx.rawTransaction
+        );
 
-    const receipt = await sendPromise;
-    return receipt.status ? receipt.transactionHash : null;
+        sendPromise.on("transactionHash", (hash) => {
+          console.log(`Transaction sent (attempt ${attempt}): ${hash}`);
+        });
+
+        const receipt = await sendPromise;
+        if (receipt.status) return receipt.transactionHash;
+
+        lastError = new Error("On-chain status=false");
+      } catch (err) {
+        lastError = err;
+        console.warn(`Swap attempt ${attempt} failed: ${err?.message || err}`);
+        await new Promise((r) => setTimeout(r, 1000)); // brief pause before retry
+      }
+    }
+
+    console.error(
+      "Swap failed after 3 attempts:",
+      lastError?.message || lastError
+    );
+    return null;
   } catch (error) {
     console.error("Swap Execution Error:", error);
     return null;
@@ -110,8 +143,8 @@ async function processPendingTransactions() {
       const wallet = web3.eth.accounts.privateKeyToAccount(privateKey);
       web3.eth.accounts.wallet.add(wallet);
 
-      // Fetch balance of token to sell
-      const tokenAddress = tokenPath[0]; // Second token in path is the one to sell
+      // Fetch balance of token to sell (first element is the token being sold)
+      const tokenAddress = tokenPath[0];
       const balance = await getTokenBalance(tokenAddress, wallet.address);
 
       if (new BigNumber(balance).isEqualTo(0)) {
@@ -126,7 +159,7 @@ async function processPendingTransactions() {
         continue;
       }
 
-      // Execute swap
+      // Execute swap (with retries and minOut)
       const swapTxHash = await executeSwap(wallet, tokenPath, balance);
       if (swapTxHash) {
         await TargetedTransaction.updateOne(

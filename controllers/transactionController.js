@@ -129,35 +129,67 @@ exports.sellToken = async (privateKey) => {
       console.log("Token spending approved!");
     }
 
-    const tx =
-      routerContract.methods.swapExactTokensForETHSupportingFeeOnTransferTokens(
-        balance,
-        0,
-        [tokenAddress, process.env.WETH_ADDRESS],
-        WALLET.address,
-        deadline
-      );
+    // --- Compute amountOutMin with slippage (1% by default)
+    const path = [tokenAddress, process.env.WETH_ADDRESS];
+    const slippageBps = Number(process.env.SLIPPAGE_BPS || 100); // 100 = 1%
 
-    const txData = {
-      from: WALLET.address,
-      to: process.env.ROUTER_ADDRESS,
-      data: tx.encodeABI(),
-      gas: 300000,
-      gasPrice: increasedGasPrice.toString(),
-    };
+    let lastError;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        // Fresh quote each attempt
+        const amounts = await routerContract.methods
+          .getAmountsOut(balance, path)
+          .call();
+        const expectedOut = new BigNumber(amounts[amounts.length - 1]);
+        const amountOutMin = expectedOut
+          .multipliedBy(10000 - slippageBps)
+          .div(10000)
+          .toFixed(0);
 
-    const signedTx = await web3.eth.accounts.signTransaction(
-      txData,
-      WALLET.privateKey
-    );
-    const sendTx = web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+        const tx =
+          routerContract.methods.swapExactTokensForETHSupportingFeeOnTransferTokens(
+            balance,
+            amountOutMin, // <-- no more 0
+            path,
+            WALLET.address,
+            deadline
+          );
 
-    return new Promise((resolve, reject) => {
-      sendTx.on("receipt", (receipt) => resolve(receipt.transactionHash));
-      sendTx.on("error", (err) => reject(err));
-    });
+        const txData = {
+          from: WALLET.address,
+          to: process.env.ROUTER_ADDRESS,
+          data: tx.encodeABI(),
+          gas: 300000,
+          gasPrice: increasedGasPrice.toString(),
+        };
+
+        const signedTx = await web3.eth.accounts.signTransaction(
+          txData,
+          WALLET.privateKey
+        );
+        const sendTx = web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+
+        const txHash = await new Promise((resolve, reject) => {
+          sendTx.on("receipt", (receipt) => {
+            if (receipt.status) return resolve(receipt.transactionHash);
+            reject(new Error("on-chain status=false"));
+          });
+          sendTx.on("error", (err) => reject(err));
+        });
+
+        console.log(`Sell succeeded on attempt ${attempt}: ${txHash}`);
+        return txHash; // success
+      } catch (err) {
+        lastError = err;
+        console.warn(`Sell attempt ${attempt} failed: ${err?.message || err}`);
+        // short delay before retry
+        await new Promise((r) => setTimeout(r, 1000));
+      }
+    }
+
+    throw lastError || new Error("Sell failed after 3 retries");
   } catch (err) {
-    console.error(":", err);
+    console.error("sellToken:", err?.message || err);
     return null;
   }
 };
