@@ -4,7 +4,7 @@ A sophisticated cryptocurrency trading bot designed for automated token sniping 
 
 ## Contact
 
-[Pioneer](https://t.me/hi_3333)
+[Solove](https://t.me/Solove_77)
 
 ## ⚠️ Disclaimer
 
@@ -228,12 +228,12 @@ The bot uses an admin configuration system to manage:
 
 ### Cron Jobs
 
-1. **Sell Cron Job** (`cronjobSell.js`)
+1. **Automated Sell Bot** (`automatedSellBot.js`)
    - Runs every 30 seconds
    - Processes pending transactions
    - Executes automated selling
 
-2. **Data Collection** (`graphCronJob.js`)
+2. **Market Data Collector** (`marketDataCollector.js`)
    - Runs every 20 seconds
    - Collects block height data
    - Monitors POL price
@@ -253,9 +253,9 @@ The bot implements a robust retry system:
 
 - **User**: User authentication and management
 - **Admin**: Admin user management
-- **AdminConfig**: Trading configuration
-- **TargetedAccount**: Private key management
-- **TargetedTransaction**: Transaction tracking
+- **adminConfig**: Trading configuration
+- **targetedAccount**: Private key management
+- **targetedTransaction**: Transaction tracking
 - **BlockHeight**: Block height monitoring
 - **PolPrice**: Price data collection
 - **PendingTx**: Pending transaction monitoring
@@ -296,9 +296,9 @@ bnbSniperBot/
 ├── models/                 # Database schemas
 ├── routes/                 # API routes
 ├── utils/                  # Utility functions
-├── cronjobSell.js          # Automated selling
-├── graphCronJob.js         # Data collection
-├── filterPair.js           # Pair filtering
+├── automatedSellBot.js     # Automated selling
+├── marketDataCollector.js  # Data collection
+├── tokenPairFilter.js      # Pair filtering
 └── server.js               # Main application
 ```
 

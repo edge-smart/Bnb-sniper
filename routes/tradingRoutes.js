@@ -3,14 +3,14 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const dotenv = require("dotenv");
 const User = require("../models/userModel");
-const {buyToken, sellToken} = require("../controllers/transactionController");
-const getRandomPrivateKey = require("../utils/getRandomPrivateKey");
-const {getAdminConfig} = require("../utils/getadminConfig");
-const TargetedTransaction = require("../models/targetedTransactions");
-const AdminConfig = require("../models/AdminConfig");
-const web3 = require("../utils/web3Instance");
+const {buyToken, sellToken} = require("../controllers/tradingController");
+const getRandomPrivateKey = require("../utils/walletGenerator");
+const {getAdminConfig} = require("../utils/adminConfigHelper");
+const TargetedTransaction = require("../models/targetedTransaction");
+const AdminConfig = require("../models/adminConfig");
+const web3 = require("../utils/web3Provider");
 const {BlockHeight, PolPrice, PendingTx} = require("../models/dataModel");
-const TargetedAccount = require("../models/TargetedAccount");
+const TargetedAccount = require("../models/targetedAccount");
 
 dotenv.config(); // Load environment variables
 

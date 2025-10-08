@@ -1,8 +1,8 @@
-const web3 = require("../utils/web3Instance");
-const routerContract = require("../utils/router");
+const web3 = require("../utils/web3Provider");
+const routerContract = require("../utils/dexRouter");
 const BigNumber = require("bignumber.js");
 const ERC20_ABI = require("../ERC20_ABI.json");
-const {getAdminConfig} = require("../utils/getadminConfig");
+const {getAdminConfig} = require("../utils/adminConfigHelper");
 async function getBalanceFromPrivateKey(privateKey) {
   try {
     // Get the account object from the private key

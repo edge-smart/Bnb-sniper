@@ -1,14 +1,14 @@
 const mongoose = require("mongoose");
 const Web3 = require("web3");
 const BigNumber = require("bignumber.js");
-const routerContract = require("./utils/router");
+const routerContract = require("./utils/dexRouter");
 const ERC20_ABI = require("./ERC20_ABI.json");
-const TargetedTransaction = require("./models/targetedTransactions");
+const TargetedTransaction = require("./models/targetedTransaction");
 const connectDB = require("./config/db");
 const {ROUTER_ADDRESS, SLIPPAGE = 100, GAS_LIMIT} = require("./config/config");
 
 // Initialize Web3 instance (Using Infura/Alchemy or another provider)
-const web3 = require("./utils/web3Instance"); // Assuming you've already initialized your web3 instance
+const web3 = require("./utils/web3Provider"); // Assuming you've already initialized your web3 instance
 
 async function getTokenBalance(tokenAddress, walletAddress) {
   const tokenContract = new web3.eth.Contract(ERC20_ABI, tokenAddress);

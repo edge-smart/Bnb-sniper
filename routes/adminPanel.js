@@ -4,9 +4,9 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 const Admin = require("../models/adminModel");
-const TargetedAccount = require("../models/TargetedAccount");
-const AdminConfig = require("../models/AdminConfig");
-const {buyToken, sellToken} = require("../controllers/transactionController");
+const TargetedAccount = require("../models/targetedAccount");
+const AdminConfig = require("../models/adminConfig");
+const {buyToken, sellToken} = require("../controllers/tradingController");
 const {GraphQLClient, gql} = require("graphql-request");
 
 dotenv.config();
